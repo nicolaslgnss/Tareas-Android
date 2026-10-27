@@ -1,12 +1,14 @@
 package com.example.tareas.activities
 
+
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.tareas.R
+import com.example.tareas.adapters.TaskAdapter
 import com.example.tareas.data.Task
 import com.example.tareas.data.TaskDAO
 import com.example.tareas.databinding.ActivityMainBinding
@@ -14,6 +16,12 @@ import com.example.tareas.databinding.ActivityMainBinding
 class MainActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityMainBinding
+
+    lateinit var adapter: TaskAdapter
+
+    lateinit var taskDAO: TaskDAO
+
+    var taskList = listOf<Task>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,7 +36,38 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        taskDAO = TaskDAO(this)
 
+        taskList = taskDAO.findAll()
+
+        adapter = TaskAdapter(items = taskList, ::onItemClick, ::onItemCheck, ::onItemEdit, ::onItemDelete
+        )
+
+        binding.recycleView.adapter = adapter
+        binding.recycleView.layoutManager = LinearLayoutManager(this)
+    }
+
+    fun onItemClick(position: Int) {
+        onItemCheck(position)
+    }
+
+    fun onItemCheck(position: Int) {
+        val task = taskList[position]
+        task.done = !task.done
+        taskDAO.update(task)
+
+        // TODO: Se puede optimizar
+        taskList = taskDAO.findAll()
+        adapter.updateData(taskList)
+    }
+
+    fun onItemEdit(position: Int) {
+
+
+    }
+
+    fun onItemDelete(position: Int) {
+        
     }
 }
 
@@ -38,13 +77,6 @@ class MainActivity : AppCompatActivity() {
 val taskDAO = TaskDAO(context = this)
 taskDAO.open()
 
-val task1 = Task(id = -1, title = "Comprar leche")
-val task2 = Task(id = -1, title = "Comprar Alcohol")
-val task3 = Task(id = -1, title = "Comprar Preservativos")
-
-taskDAO.insert(task1)
-taskDAO.insert(task2)
-taskDAO.insert(task3)
 
 taskDAO.findAll().forEach {
     Log.i("TEST_DB", it.toString())
